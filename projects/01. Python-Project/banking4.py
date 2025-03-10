@@ -1,60 +1,168 @@
-# - 1 package: `csv`
-#     - **`import csv` at the top of your python file**
-#   - Functionality:
-#     - Add New Customer
-#         * customer can have a checking account
-#         * customer can have a savings account
-#         * customer can have both a checking and a savings account
-#     - Withdraw Money from Account (required login)
-#         * withdraw from savings
-#         * withdraw from checking
-#     - Deposit Money into Account (required login)
-#         * can deposit into savings
-#         * can deposit into checking
-#     - Transfer Money Between Accounts (required login)
-#         * can transfer from savings to checking
-#         * can transfer from checking to savings
-#         * can transfer from checking or savings to another customer's account
-#     - Build Overdraft Protection
-#         * charge customer ACME overdraft protection fee of $35 when overdraft
-#         * prevent customer from withdrawing more than $100 USD if account is currently negative
-#             * _the account cannot have a resulting balance of less than -$100_
-#               OR
-#             * _the customer cannot make a withdrawal of greater than $100_
-#         * deactivate the account after 2 overdrafts
-#             * reactivate the account if the customer brings the account current, paying both the overdraft amount and the
-#               resulting overdraft fees
-#     - **BONUS**
-#       - Display Transaction Data (You need to create another file to store the transaction history, required login)
-#       - index all transactions for a customer account
-#       - show one transaction **details**
-#       - show historical data of transactions (date and time of transaction, type of transaction, resulting balance, etc.)
-#       - Unit Testing Based on **test-driven development (TDD)** approach
+import csv
+import os
+import re
+from datetime import datetime
 
-class bank:
+CUSTOMER_FILE = "customers.csv"
+TRANSACTION_FILE = "transactions.csv"
+OVERDRAFT_FEE = 35
+MAX_NEGATIVE_BALANCE = -100
 
+# Ensure CSV files exist
+def initialize_files():
+    if not os.path.exists(CUSTOMER_FILE):
+        with open(CUSTOMER_FILE, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["ID", "Name", "Checking", "Savings", "Overdrafts", "Status"])
+    
+    if not os.path.exists(TRANSACTION_FILE):
+        with open(TRANSACTION_FILE, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Customer ID", "Date", "Time", "Type", "Amount", "Balance"])
 
+# Load customers from CSV
+def load_customers():
+    customers = {}
+    with open(CUSTOMER_FILE, "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            customers[row["ID"]] = {
+                "name": row["Name"],
+                "checking": float(row["Checking"]),
+                "savings": float(row["Savings"]),
+                "overdrafts": int(row["Overdrafts"]),
+                "status": row["Status"]
+            }
+    return customers
 
-# **YOU WILL NEED TO USE THE PYTHON CSV PACKAGE TO WORK WITH THE BANK.CSV FILE**
-# **[PYTHON CSV](https://docs.python.org/3/library/csv.html)**
+# Save customers to CSV
+def save_customers(customers):
+    with open(CUSTOMER_FILE, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["ID", "Name", "Checking", "Savings", "Overdrafts", "Status"])
+        for cid, data in customers.items():
+            writer.writerow([cid, data["name"], data["checking"], data["savings"], data["overdrafts"], data["status"]])
 
+# Record a transaction
+def record_transaction(cid, transaction_type, amount, balance):
+    now = datetime.now().strftime("%Y-%m-%d,%H:%M:%S")
+    with open(TRANSACTION_FILE, "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([cid, *now.split(","), transaction_type, amount, balance])
 
-# ## EXAMPLES
+# Add a new customer
+def add_customer():
+    name = input("Great! What's your full name? ").strip().title()
+    account_type = input("Would you like a checking account, savings account, or both? ").lower().strip()
+    customers = load_customers()
+    cid = str(len(customers) + 1)  # Simple auto-increment ID
+    checking = 0.0 if "checking" in account_type else None
+    savings = 0.0 if "savings" in account_type else None
+    customers[cid] = {"name": name, "checking": checking or 0, "savings": savings or 0, "overdrafts": 0, "status": "Active"}
+    save_customers(customers)
+    print(f"\nWelcome, {name}! Your account has been created successfully. Your Customer ID is {cid}.\n")
 
-# ```text
-# 10001;suresh;sigera;juagw362;1000,10000
-# 10002;james;taylor;idh36%@#FGd;10000,10000
-# 10003;melvin;gordon;uYWE732g4ga1;2000,20000
-# 10004;stacey;abrams;DEU8_qw3y72$;2000,20000
-# 10005;jake;paul;d^dg23g)@;100000,100000
-# ```
+# Deposit money
+def deposit(cid, account, amount):
+    customers = load_customers()
+    if cid not in customers or customers[cid]["status"] != "Active":
+        print("Invalid or inactive account.")
+        return
+    customers[cid][account] += amount
+    save_customers(customers)
+    record_transaction(cid, f"Deposit to {account}", amount, customers[cid][account])
+    print(f"Deposited ${amount} into {account}. New balance: ${customers[cid][account]}.\n")
 
-# | account_id | frst_name | last_name | password    | balance_checking | balance_savings |
-# |------------|-----------|-----------|-------------|------------------|-----------------|
-# | 10001      | suresh    | sigera    | juagw362    | 1000             | 10000           | 
-# | 10002      | james     | taylor    | idh36%@#FGd | 10000            | 10000           |
-# | ...        | ...       | ...       | ...         | ...              | ...             |
+# Withdraw money
+def withdraw(cid, account, amount):
+    customers = load_customers()
+    if cid not in customers or customers[cid]["status"] != "Active":
+        print("Invalid or inactive account.")
+        return
 
-# Given the above file structure for the ACME Bank, write the entire Python program using classes, methods, file handling, and exception handling to meet the functional requirements below:
-class bank:
+    balance = customers[cid][account]
+    if balance - amount < MAX_NEGATIVE_BALANCE:
+        print("Withdrawal exceeds allowed overdraft limit.")
+        return
+
+    customers[cid][account] -= amount
+    if customers[cid][account] < 0:
+        customers[cid][account] -= OVERDRAFT_FEE
+        customers[cid]["overdrafts"] += 1
+        print(f"Overdraft! A fee of ${OVERDRAFT_FEE} has been applied.")
+
+        if customers[cid]["overdrafts"] >= 2:
+            customers[cid]["status"] = "Inactive"
+            print("Your account has been deactivated due to excessive overdrafts.")
+
+    save_customers(customers)
+    record_transaction(cid, f"Withdraw from {account}", amount, customers[cid][account])
+    print(f"Withdrew ${amount} from {account}. New balance: ${customers[cid][account]}.\n")
+
+# Display transactions
+def display_transactions(cid):
+    with open(TRANSACTION_FILE, "r") as f:
+        reader = csv.DictReader(f)
+        transactions = [row for row in reader if row["Customer ID"] == cid]
+
+    if not transactions:
+        print("No transactions found.\n")
+        return
+
+    print(f"\nTransaction history for Customer {cid}:")
+    for txn in transactions:
+        print(f"{txn['Date']} {txn['Time']} | {txn['Type']} | Amount: ${txn['Amount']} | Balance: ${txn['Balance']}")
+    print()
+
+# Main chatbot function
+def start_chatbot():
+    print("\n🌟 Welcome to ACME Bank! 🌟")
+    print("How can I assist you today?\n")
+
+    while True:
+        user_input = input("> ").lower().strip()
+
+        if "open account" in user_input or "create account" in user_input:
+            add_customer()
+
+        elif "deposit" in user_input:
+            match = re.search(r"deposit (\d+) into (checking|savings)", user_input)
+            if match:
+                cid = input("Enter your Customer ID: ")
+                amount = float(match.group(1))
+                account = match.group(2)
+                deposit(cid, account, amount)
+            else:
+                print("Please specify an amount and account type. Example: 'Deposit 500 into checking'")
+
+        elif "withdraw" in user_input:
+            match = re.search(r"withdraw (\d+) from (checking|savings)", user_input)
+            if match:
+                cid = input("Enter your Customer ID: ")
+                amount = float(match.group(1))
+                account = match.group(2)
+                withdraw(cid, account, amount)
+            else:
+                print("Please specify an amount and account type. Example: 'Withdraw 200 from savings'")
+
+        elif "show transactions" in user_input or "transaction history" in user_input:
+            cid = input("Enter your Customer ID: ")
+            display_transactions(cid)
+
+        elif "exit" in user_input:
+            print("\nThank you for banking with ACME Bank! We appreciate your trust. Have a wonderful day! 😊")
+            break
+
+        else:
+            print("\nI'm here to assist you! You can say things like:")
+            print("- 'Open an account'")
+            print("- 'Deposit 500 into checking'")
+            print("- 'Withdraw 200 from savings'")
+            print("- 'Show my transaction history'")
+            print("- 'Exit'\n")
+
+# Run chatbot
+if __name__ == "_main_":
+    initialize_files()
+    start_chatbot()
     

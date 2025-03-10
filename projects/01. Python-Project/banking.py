@@ -1,166 +1,213 @@
 import csv
-import datetime
-import os 
+from datetime import datetime
 
 
 
-CUSTOMERS_FILE = "customers.csv"
+class BankAccount:
+    id = 1000
 
-class Bank:
-    def _init_(self):
-        self.customers = self.load_customers()
+    def __init__(self, name, checking_balance, savings_balance, password, overdraft_count=0, active=True):
+        BankAccount.id += 1
+        self.account_number = BankAccount.id
+        self.name = name
+        self.checking_balance = checking_balance
+        self.savings_balance = savings_balance
+        self.overdraft_count = overdraft_count
+        self.active = active
+        self.password = password
 
-    def load_customers(self):
-        """Load customer data from CSV."""
-        if not os.path.exists(CUSTOMERS_FILE):
-            return {}
-
-        customers = {}
-        with open(CUSTOMERS_FILE, mode="r", newline="") as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                customers[row["username"]] = {
-                    "name": row["name"],
-                    "password": row["password"],
-                    "checking": float(row["checking"]),
-                    "savings": float(row["savings"]),
-                    "overdrafts": int(row["overdrafts"]),
-                    "active": row["active"] == "True",
-                }
-        return customers
-
-    def save_customers(self):
-        """Save customer data to CSV."""
-        with open(CUSTOMERS_FILE, mode="w", newline="") as file:
-            fieldnames = ["username", "name", "password", "checking", "savings", "overdrafts", "active"]
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            for username, data in self.customers.items():
-                writer.writerow({
-                    "username": username,
-                    "name": data["name"],
-                    "password": data["password"],
-                    "checking": data["checking"],
-                    "savings": data["savings"],
-                    "overdrafts": data["overdrafts"],
-                    "active": data["active"]
-                })
-
-    def add_customer(self, username, name, password, has_checking=True, has_savings=True):
-        """Add a new customer."""
-        if username in self.customers:
-            return "Username already exists!"
-
-        self.customers[username] = {
-            "name": name,
-            "password": password,
-            "checking": 0.0 if has_checking else None,
-            "savings": 0.0 if has_savings else None,
-            "overdrafts": 0,
-            "active": True
+def get_account_details(self):
+        return {
+            'account_number': self.account_number,
+            'name': self.name,
+            'checking_balance': self.checking_balance,
+            'savings_balance': self.savings_balance,
+            'overdraft_count': self.overdraft_count,
+            'active': self.active,
+            'password': self.password
         }
-        self.save_customers()
-        return "Customer added successfully!"
-    
 
-
-class Auth:
-    def _init_(self):
-        self.bank = Bank()
-
-    def login(self, username, password):
-        """Authenticate user login."""
-        if username in self.bank.customers:
-            user = self.bank.customers[username]
-            if user["password"] == password and user["active"]:
+def withdraw(self, account_type, amount):
+        if account_type == "checking":
+            if self.checking_balance >= amount:
+                self.checking_balance -= amount
+                return True
+        elif account_type == "savings":
+            if self.savings_balance >= amount:
+                self.savings_balance -= amount
                 return True
         return False
-    
-TRANSACTIONS_FILE = "transactions.csv"
 
-class Transactions:
-    def _init_(self):
+def deposit(self, account_type, amount):
+        if account_type == "checking":
+            self.checking_balance += amount
+        elif account_type == "savings":
+            self.savings_balance += amount
+        return True
+
+def transfer(self, recipient_account, account_type, amount):
+        if self.withdraw(account_type, amount):
+            if account_type == "checking":
+                recipient_account.deposit("checking", amount)
+            elif account_type == "savings":
+                recipient_account.deposit("savings", amount)
+            return True
+        return False
+
+
+class Transaction:
+    def __init__(self, account_number, transaction_type, amount, resulting_balance):
+        self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.account_number = account_number
+        self.transaction_type = transaction_type
+        self.amount = amount
+        self.resulting_balance = resulting_balance
+
+    def get_transaction_details(self):
+        return {
+            'timestamp': self.timestamp,
+            'account_number': self.account_number,
+            'transaction_type': self.transaction_type,
+            'amount': self.amount,
+            'resulting_balance': self.resulting_balance
+        }
+
+def load_transactions(filename="transactions.csv"):
+    try:
+        df = pd.read_csv(filename)
+        transactions = [Transaction(**row) for _, row in df.iterrows()]
+        return transactions
+    except FileNotFoundError:
+        return []
+    except pd.errors.EmptyDataError:
+        return []
+
+def save_transactions(transactions, filename="transactions.csv"):
+    data = [t.get_transaction_details() for t in transactions]
+    df = pd.DataFrame(data)
+    df.to_csv(filename, index=False)
+
+class Bank:
+    def __init__(self):
+        self.accounts = {}
+
+    def add_account(self, account):
+        self.accounts[account.account_number] = account
+
+    def get_account(self, account_number):
+        return self.accounts.get(account_number)
+
+    def authenticate_user(self, account_number, password):
+        account = self.get_account(account_number)
+        if account and account.password == password:
+            return account
+        return None
+
+class BankingApp:
+    def __init__(self):
         self.bank = Bank()
-        self.overdraft = Overdraft(self.bank)
 
-    def log_transaction(self, username, type, amount, balance):
-        """Record transaction in CSV."""
-        with open(TRANSACTIONS_FILE, mode="a", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow([username, datetime.datetime.now(), type, amount, balance])
+    def signup(self):
+        print("Creating a new account.")
+        account_number = input("Enter a new account number: ")
+        name = input("Enter your full name: ")
+        password = input("Create a password: ")
+        checking_balance = float(input("Enter initial checking balance: "))
+        savings_balance = float(input("Enter initial savings balance: "))
+        account = BankAccount(account_number, name, checking_balance, savings_balance, password=password)
+        self.bank.add_account(account)
+        print(f"Account for {name} created successfully!")
 
-    def deposit(self, username, account_type, amount):
-        """Deposit money into checking or savings."""
-        if amount <= 0:
-            return "Invalid deposit amount!"
-        
-        user = self.bank.customers[username]
-        if user[account_type] is None:
-            return f"{account_type.capitalize()} account does not exist!"
-
-        user[account_type] += amount
-        self.bank.save_customers()
-        self.log_transaction(username, "Deposit", amount, user[account_type])
-        return "Deposit successful!"
-
-    def withdraw(self, username, account_type, amount):
-        """Withdraw money with overdraft protection."""
-        user = self.bank.customers[username]
-        return self.overdraft.process_withdrawal(username, account_type, amount)
-
-    def transfer(self, from_user, to_user, from_account, amount):
-        """Transfer money between accounts or to another customer."""
-        if amount <= 0:
-            return "Invalid transfer amount!"
-
-        sender = self.bank.customers[from_user]
-        recipient = self.bank.customers.get(to_user)
-
-        if sender[from_account] is None or sender[from_account] < amount:
-            return "Insufficient funds!"
-
-        sender[from_account] -= amount
-        if recipient:
-            recipient["checking"] += amount  # All transfers go to checking by default
+    def login(self):
+        account_number = input("Enter your account number: ")
+        password = input("Enter your password: ")
+        account = self.bank.authenticate_user(account_number, password)
+        if account:
+            print(f"Welcome back, {account.name}!")
+            return account
         else:
-            return "Recipient not found!"
+            print("Invalid credentials. Please try again.")
+            return None
 
-        self.bank.save_customers()
-        self.log_transaction(from_user, "Transfer", amount, sender[from_account])
-        return "Transfer successful!"
-        
-class Overdraft:
-    OVERDRAFT_FEE = 35
-    MAX_NEGATIVE_BALANCE = -100
+    def main_menu(self, account):
+        while True:
+            print("\nMain Menu:")
+            print("1. Check Balance")
+            print("2. Deposit Money")
+            print("3. Withdraw Money")
+            print("4. Transfer Money")
+            print("5. Log out")
+            choice = input("Choose an option (1-5): ")
 
-    def _init_(self, bank):
-        self.bank = bank
+            if choice == '1':
+                self.check_balance(account)
+            elif choice == '2':
+                self.deposit_money(account)
+            elif choice == '3':
+                self.withdraw_money(account)
+            elif choice == '4':
+                self.transfer_money(account)
+            elif choice == '5':
+                print("Logging out...")
+                break
+            else:
+                print("Invalid choice, please try again.")
 
-    def process_withdrawal(self, username, account_type, amount):
-        """Handle withdrawals with overdraft protection."""
-        user = self.bank.customers[username]
-        balance = user[account_type]
+    def check_balance(self, account):
+        print(f"\nAccount Balance:")
+        print(f"Checking: ${account.checking_balance:.2f}")
+        print(f"Savings: ${account.savings_balance:.2f}")
 
-        if balance - amount < self.MAX_NEGATIVE_BALANCE:
-            return "Overdraft limit reached!"
+    def deposit_money(self, account):
+        account_type = input("Deposit to (checking/savings): ").lower()
+        amount = float(input("Enter deposit amount: "))
+        if account.deposit(account_type, amount):
+            print(f"Deposited ${amount:.2f} to {account_type} account.")
+        else:
+            print("Deposit failed.")
 
-        if balance < 0 and amount > 100:
-            return "Cannot withdraw more than $100 when negative!"
+    def withdraw_money(self, account):
+        account_type = input("Withdraw from (checking/savings): ").lower()
+        amount = float(input("Enter withdrawal amount: "))
+        if account.withdraw(account_type, amount):
+            print(f"Withdrew ${amount:.2f} from {account_type} account.")
+        else:
+            print("Insufficient balance for withdrawal.")
 
-        user[account_type] -= amount
-        if user[account_type] < 0:
-            user["overdrafts"] += 1
-            user[account_type] -= self.OVERDRAFT_FEE
+    def transfer_money(self, account):
+        recipient_account_number = input("Enter recipient account number: ")
+        recipient_account = self.bank.get_account(recipient_account_number)
+        if recipient_account:
+            account_type = input("Transfer from (checking/savings): ").lower()
+            amount = float(input("Enter transfer amount: "))
+            if account.transfer(recipient_account, account_type, amount):
+                print(f"Transferred ${amount:.2f} to account {recipient_account_number}.")
+            else:
+                print("Transfer failed.")
+        else:
+            print("Recipient account not found.")
 
-        if user["overdrafts"] >= 2:
-            user["active"] = False  # Deactivate account
+    def start(self):
+        print("Welcome to the Banking App!")
+        while True:
+            print("\n1. Login")
+            print("2. Sign Up")
+            print("3. Exit")
+            choice = input("Choose an option (1-3): ")
 
-        self.bank.save_customers()
-        return "Withdrawal successful!"
-    
+            if choice == '1':
+                account = self.login()
+                if account:
+                    self.main_menu(account)
+            elif choice == '2':
+                self.signup()
+            elif choice == '3':
+                print("Goodbye!")
+                break
+            else:
+                print("Invalid choice, please try again.")
 
-Bank()
-Auth()
-Transactions()
-Overdraft()
+if __name__ == "__main__":
+    app = BankingApp()
+    app.start()
 

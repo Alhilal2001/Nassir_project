@@ -1,10 +1,10 @@
 import csv
 import datetime
-from turtle
+from turtle import pd
 import unittest
 
-class BankAccount:
-    def __init__(self, account_number=0, name=0, checking_balance=0, savings_balance=0, overdraft_count=0, active=True, password=""):
+class BankAccount:        
+    def __init__(self, account_number="", name="", checking_balance=0.0, savings_balance=0.0, overdraft_count=0, active=True, password=""):
         with open('bank.csv', 'r') as project:
             project = csv.reader(project)
             for i in project:
@@ -16,7 +16,58 @@ class BankAccount:
         self.savings_balance = savings_balance
         self.overdraft_count = overdraft_count
         self.active = active
-        self.password=password
+        self.password=password 
+
+def add_customer(accounts):
+    account_number = input("Enter account number: ")
+    name = input("Enter customer name: ")
+    password = input("Enter password: ")
+    checking = input("Open checking account? (yes/no): ").lower() == "yes"
+    savings = input("Open savings account? (yes/no): ").lower() == "yes"
+    checking_balance = float(input("Enter initial checking balance: ") if checking else 0)
+    savings_balance = float(input("Enter initial savings balance: ") if savings else 0)
+    account = BankAccount(account_number, name, checking_balance, savings_balance, password=password)
+    accounts[account_number] = account
+    print("Customer added successfully.")
+    
+    def login(self, username, password):
+        """Authenticate user login."""
+        if username in self.bank.customers:
+            user = self.bank.customers[username]
+            if user["password"] == password and user["active"]:
+                return True
+        return False
+
+    def withdraw_money(account, transactions):
+        account_type = input("Withdraw from (checking/savings): ").lower()
+        amount = float(input("Enter withdrawal amount: "))
+        if account.withdraw(account_type, amount):
+            balance = account.checking_balance if account_type == "checking" else account.savings_balance
+            transactions.append(Transaction(account.account_number, f"Withdraw {account_type.capitalize()}", amount, balance))
+            print("Withdrawal successful.")
+        else:
+            print("Withdrawal failed.")
+
+    def deposit_money(account, transactions):
+        account_type = input("Deposit to (checking/savings): ").lower()
+        amount = float(input("Enter deposit amount: "))
+        if account.deposit(account_type, amount):
+            balance = account.checking_balance if account_type == "checking" else account.savings_balance
+            transactions.append(Transaction(account.account_number, f"Deposit {account_type.capitalize()}", amount, balance))
+            print("Deposit successful.")
+        else:
+            print("Deposit failed.")
+
+    def transfer_money(account, accounts, transactions):
+        recipient_account_number = input("Enter recipient account number: ")
+        account_type = input("Transfer from (checking/savings): ").lower()
+        amount = float(input("Enter transfer amount: "))
+        if recipient_account_number in accounts and account.transfer(accounts[recipient_account_number], account_type, amount):
+            balance = account.checking_balance if account_type == "checking" else account.savings_balance
+            transactions.append(Transaction(account.account_number, f"Transfer {account_type.capitalize()} to {recipient_account_number}", amount, balance))
+            print("Transfer successful.")
+        else:
+            print("Transfer failed.")
 
 class Overdraft:
     OVERDRAFT_FEE = 35
@@ -89,57 +140,6 @@ def save_transactions(transactions, filename="transactions.csv"):
     data = [t.get_transaction_details() for t in transactions]
     df = pd.DataFrame(data)
     df.to_csv(filename, index=False)
-
-def add_customer(accounts):
-    account_number = input("Enter account number: ")
-    name = input("Enter customer name: ")
-    password = input("Enter password: ")
-    checking = input("Open checking account? (yes/no): ").lower() == "yes"
-    savings = input("Open savings account? (yes/no): ").lower() == "yes"
-    checking_balance = float(input("Enter initial checking balance: ") if checking else 0)
-    savings_balance = float(input("Enter initial savings balance: ") if savings else 0)
-    account = BankAccount(account_number, name, checking_balance, savings_balance, password=password)
-    accounts[account_number] = account
-    print("Customer added successfully.")
-    
-def login(self, username, password):
-        """Authenticate user login."""
-        if username in self.bank.customers:
-            user = self.bank.customers[username]
-            if user["password"] == password and user["active"]:
-                return True
-        return False
-
-def withdraw_money(account, transactions):
-    account_type = input("Withdraw from (checking/savings): ").lower()
-    amount = float(input("Enter withdrawal amount: "))
-    if account.withdraw(account_type, amount):
-        balance = account.checking_balance if account_type == "checking" else account.savings_balance
-        transactions.append(Transaction(account.account_number, f"Withdraw {account_type.capitalize()}", amount, balance))
-        print("Withdrawal successful.")
-    else:
-        print("Withdrawal failed.")
-
-def deposit_money(account, transactions):
-    account_type = input("Deposit to (checking/savings): ").lower()
-    amount = float(input("Enter deposit amount: "))
-    if account.deposit(account_type, amount):
-        balance = account.checking_balance if account_type == "checking" else account.savings_balance
-        transactions.append(Transaction(account.account_number, f"Deposit {account_type.capitalize()}", amount, balance))
-        print("Deposit successful.")
-    else:
-        print("Deposit failed.")
-
-def transfer_money(account, accounts, transactions):
-    recipient_account_number = input("Enter recipient account number: ")
-    account_type = input("Transfer from (checking/savings): ").lower()
-    amount = float(input("Enter transfer amount: "))
-    if recipient_account_number in accounts and account.transfer(accounts[recipient_account_number], account_type, amount):
-            balance = account.checking_balance if account_type == "checking" else account.savings_balance
-            transactions.append(Transaction(account.account_number, f"Transfer {account_type.capitalize()} to {recipient_account_number}", amount, balance))
-            print("Transfer successful.")
-    else:
-            print("Transfer failed.")
 
 def display_transactions(account, transactions):
     account_transactions = [t for t in transactions if t.account_number == account.account_number]
