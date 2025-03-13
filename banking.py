@@ -44,12 +44,13 @@ class Account:
         if account_type == "checking":
             self.checking_balance += amount
             return True
-        elif account_type == "saving":
+        elif account_type == "savings":
             self.saving_balance += amount
             return True
         return False
 
     def withdraw(self, account_type, amount):
+            self.overdraft_count = float(self.overdraft_count)
             if account_type == "checking":
                 if self.checking_balance - amount < -100:
                     print("Withdrawal denied. Account cannot have a balance less than -$100.")
@@ -70,7 +71,7 @@ class Account:
                     print("Withdrawal denied. Account cannot have a balance less than -$100.")
                     return False
                 if self.saving_balance < 0:
-                    print("Withdrawal denied. Cannot withdraw more than $100 when account is negative.")
+                    print("Withdrawal denied. Cannot withdraw when account is negative.")
                     return False
                 self.saving_balance -= amount
                 if self.saving_balance < 0:
@@ -323,12 +324,12 @@ class Withdraw(Bank):
             except ValueError:
                 print("Invalid amount. Please enter a numeric value.")
                 return
-            if account_type == "checking" and account.checking_balance < amount:
-                print("Insufficient balance for withdrawal.")
-                return
-            elif account_type == "savings" and account.saving_balance < amount:
-                print("Insufficient balance for withdrawal.")
-                return
+            # if account_type == "checking" and account.checking_balance < amount:
+            #     print("Insufficient balance for withdrawal.")
+            #     return
+            # elif account_type == "savings" and account.saving_balance < amount:
+            #     print("Insufficient balance for withdrawal.")
+            #     return
             if account.withdraw(account_type, amount):
                 print(f"Withdrew ${amount:.2f} from {account_type} account.")
                 self.save_customers()
