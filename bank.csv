@@ -1,0 +1,6 @@
+account_id,active,first_name,last_name,password,checking_balance,saving_balance,overdraft_count
+10001,True,Nassir,Alhilal,234,200.0,200.0,0
+10002,True,Nassir,Alhilal,234,200.0,300.0,0
+10003,False,Nassir,Alhilal,234,200.0,100.0,0
+10004,True,Nassir,Alhilal,234,200.0,6000.0,0
+10005,True,Nassir,Alhilal,234,200.0,5000.0,0
