@@ -1,106 +1,80 @@
-<img width="100%" src="https://i.imgur.com/CYx9Es5.png" />
+Banking Application
+This is a simple banking application built using Python. The app allows users to create an account, log in, check balances, deposit and withdraw money, and transfer funds. It also handles overdrafts, account deactivation after multiple overdrafts, and saving account details in a CSV file.
 
-![gif](https://media2.giphy.com/media/y3B74VeWI2QQE/giphy.gif)
+Features
+User Authentication: Allows users to sign up, log in, and access their account details.
+Account Management: Create new accounts with either a checking or savings account type (or both).
+Deposit and Withdrawal: Users can deposit and withdraw money from their checking or savings accounts.
+Transfer Funds: Users can transfer money between accounts.
+Overdraft Protection: Ensures accounts cannot go below -$100, with penalties for overdrafts and automatic deactivation after two overdrafts.
+CSV Storage: Account details are saved and loaded from a CSV file, allowing the application to persist user data.
+Requirements
+Python 3.x
+csv module (included in Python's standard library)
+Setup
+To run the application, clone the repository and navigate to the project directory.
 
-**CHECK THE PROJECT FOLDER FOR THE ACTUAL PROJECT FILES**
+bash
+Copy code
+git clone https://github.com/Nassir/banking-app.git
+cd banking-app
+No additional dependencies need to be installed, as everything is built with Python's standard library.
 
-# Banking With Python
+Usage
+To start the banking application, simply run the banking_app.py script:
 
-In the third week of this course we worked through the fundamentals of working with Python Programming Language. This project is going to put those skills to test and challenge you to figure out how to use those skills to build a miniature version of a banking system. As usual, try your best to work through solving the problem on your own. The code in this project should be your own. If you do need help, please do not go to ChatGPT and get random code because this is a graded project. Ask your intructors for help or work through it on your own.
+bash
+Copy code
+python banking_app.py
+Main Menu
+After logging in or signing up, the following menu will be displayed:
 
-## Prompt
+pgsql
+Copy code
+1. Check Balance
+2. Deposit Money
+3. Withdraw Money
+4. Transfer Money
+5. Log out
+Choose an option to interact with your bank account.
 
-ACME Bank uses a file structure called `bank.csv`. The cashiers will use this brand-new software to manage transactions, and you have been tasked with developing it.
+Account Types
+You can choose between:
 
-## Requirements
+Checking Account: Allows you to perform transactions such as deposits, withdrawals, and transfers.
+Savings Account: Similar to the checking account but intended for long-term savings.
+Handling Overdrafts
+If you attempt to withdraw more than the available balance, an overdraft fee of $35 will be applied. After two overdrafts, the account will be deactivated.
 
-Your banking program should include the following:
+File Structure
+bank.csv: A CSV file that stores all account data.
+banking_app.py: The main Python script containing the banking logic and user interface.
+Functions
+setup_csv_file(filename, fieldnames)
+Creates a CSV file with the initial seed data if the file does not already exist.
 
-- GitHub Repository:
-  - Minimum 1 commit per day / 5 commits minimum overall.
-  - one bank.csv file (provided);
-  - one python file with all code
-  - README.md file with:
-    - project name and description
-    - a table of app functionality / user stories (already provided)
-    - technologies used
-    - Icebox Features (other cool functionality you could add)
-    - Challenges / Key Takeaways From Experience
-    - dont be afraid to make it colorful and fun! Give it life :joy:
-  
-- Application Features:
-  - 4 classes (minimum)
-  - 1 file: `bank.csv`
-  - 1 file: `banking.py`
-  - 1 package: `csv`
-    - **`import csv` at the top of your python file**
-  - Unit Testing Based on **test-driven development (TDD)** approach
-  - Functionality:
-    - Add New Customer
-        * customer can have a checking account
-        * customer can have a savings account
-        * customer can have both a checking and a savings account
-    - Withdraw Money from Account (required login)
-        * withdraw from savings
-        * withdraw from checking
-    - Deposit Money into Account (required login)
-        * can deposit into savings
-        * can deposit into checking
-    - Transfer Money Between Accounts (required login)
-        * can transfer from savings to checking
-        * can transfer from checking to savings
-        * can transfer from checking or savings to another customer's account
-    - Build Overdraft Protection
-        * charge customer ACME overdraft protection fee of $35 when overdraft
-        * prevent customer from withdrawing more than $100 USD if account is currently negative
-            * _the account cannot have a resulting balance of less than -$100_
-              OR
-            * _the customer cannot make a withdrawal of greater than $100_
-        * deactivate the account after 2 overdrafts
-            * reactivate the account if the customer brings the account current, paying both the overdraft amount and the
-              resulting overdraft fees
-    - **BONUS**
-      - Display Transaction Data (You need to create another file to store the transaction history, required login)
-      - index all transactions for a customer account
-      - show one transaction **details**
-      - show historical data of transactions (date and time of transaction, type of transaction, resulting balance, etc.)
+Account Class
+Represents a bank account, with methods for depositing, withdrawing, and transferring money.
 
-**YOU WILL NEED TO USE THE PYTHON CSV PACKAGE TO WORK WITH THE BANK.CSV FILE**
-**[PYTHON CSV](https://docs.python.org/3/library/csv.html)**
+deposit(account_type, amount): Deposits money into the specified account type (checking or savings).
+withdraw(account_type, amount): Withdraws money from the specified account type (checking or savings).
+transfer(recipient_account, account_type, amount): Transfers money to another account.
+Bank Class
+Manages the bank operations, including user authentication, account creation, and account management.
 
+add_account(account): Adds a new account to the bank.
+authenticate_user(account_number, password): Authenticates a user based on their account number and password.
+signup(): Allows users to create a new account.
+login(): Authenticates users and grants access to their account.
+main_menu(account): Displays the main menu after login, allowing users to check their balance, deposit, withdraw, or transfer funds.
+Limitations
+The application currently only supports a single CSV file (bank.csv) to store all account data.
+There is no persistent session management; users must log in every time the application starts.
+The overdraft logic and penalties are limited to the hard-coded rules within the application.
+Contributing
+Feel free to fork the repository and submit pull requests. If you find any issues or have feature requests, please open an issue.
 
-## EXAMPLES
-
-```text
-10001;suresh;sigera;juagw362;1000,10000
-10002;james;taylor;idh36%@#FGd;10000,10000
-10003;melvin;gordon;uYWE732g4ga1;2000,20000
-10004;stacey;abrams;DEU8_qw3y72$;2000,20000
-10005;jake;paul;d^dg23g)@;100000,100000
-```
-
-| account_id | frst_name | last_name | password    | balance_checking | balance_savings |
-|------------|-----------|-----------|-------------|------------------|-----------------|
-| 10001      | suresh    | sigera    | juagw362    | 1000             | 10000           | 
-| 10002      | james     | taylor    | idh36%@#FGd | 10000            | 10000           |
-| ...        | ...       | ...       | ...         | ...              | ...             |
-
-Given the above file structure for the ACME Bank, write the entire Python program using classes, methods, file handling, and exception handling to meet the functional requirements below:
-
-
-### Self-sufficiency / Project assistance
-
-- At this stage being able to find the answers to development issues is of paramount importance.
-- Use all resources available to solve the issue on your own before seeking assistance. (Please do not just copy and paste code from random sources)
-- If you do seek assistance in Slack, use the support channel and explain the issue as clearly and detailed as you can,
-  include screenshots when possible, and be prepared to explain what you've done to solve the issue on your own.
-
-## Get started!
-
-![gif](https://media.giphy.com/media/ADgfsbHcS62Jy/giphy.gif)
-
-## Additional resources:
-
+License
 - [Pretty-print tabular data in Python, a library and a command-line utility](https://pypi.org/project/tabulate/)
 - [Command line colors](https://pypi.org/project/termcolor/)
 - [Command line menu](https://pypi.org/project/simple-term-menu/)

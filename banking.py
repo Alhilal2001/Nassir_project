@@ -11,16 +11,20 @@ seed_data = [
 
 fieldnames = ["account_id", "active", "first_name", "last_name", "password", "checking_balance", "saving_balance", "overdraft_count"]
 
+filename = "./bank.csv"
 
-if not os.path.exists("./bank.csv"):
-    with open("./bank.csv", 'w', newline='') as csvfile:
-        try:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in seed_data:
-                writer.writerow(row)
-        except csv.Error as e:
-            print(e)
+def setup_csv_file(filename, fieldnames):
+    if not os.path.exists(filename):
+        with open(filename, 'w', newline='') as csvfile:
+            try:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                for row in seed_data:
+                    writer.writerow(row)
+            except csv.Error as e:
+                print(e)
+                 
+setup_csv_file(filename, fieldnames)
 
 class Account:
     def __init__(self, row):
@@ -216,9 +220,11 @@ class Bank:
             if choice == '1':
                 self.check_balance(account)
             elif choice == '2':
-                self.deposit_money(account)
+                Deposit(self)
+                Deposit.deposit_money(self, account)
             elif choice == '3':
-                self.withdraw_money(account)
+                Withdraw(self)
+                Withdraw.withdraw_money(self, account)
             elif choice == '4':
                 self.transfer_money(account)
             elif choice == '5':
@@ -231,46 +237,6 @@ class Bank:
         print(f"\nAccount Balance:")
         print(f"Checking: ${account.checking_balance}")
         print(f"Savings: ${account.saving_balance}")
-    def deposit_money(self, account):
-            account_type = input("Deposit to (checking/savings): ").lower()
-            if account_type not in ["checking", "savings"]:
-                print("Invalid account type. Please enter 'checking' or 'savings'.")
-                return
-            try:
-                amount = float(input("Enter deposit amount: "))
-                if amount <= 0:
-                    print("Deposit amount must be positive.")
-                    return
-            except ValueError:
-                print("Invalid amount. Please enter a numeric value.")
-                return
-            if account.deposit(account_type, amount):
-                print(f"Deposited ${amount:.2f} to {account_type} account.")
-                self.save_customers()
-            else:
-                print("Deposit failed.")
-
-    def withdraw_money(self, account):
-            account_type = input("Withdraw from (checking/savings): ").lower()
-            try:
-                amount = float(input("Enter withdrawal amount: "))
-                if amount <= 0:
-                    print("Withdrawal amount must be positive.")
-                    return
-            except ValueError:
-                print("Invalid amount. Please enter a numeric value.")
-                return
-            if account_type == "checking" and account.checking_balance < amount:
-                print("Insufficient balance for withdrawal.")
-                return
-            elif account_type == "savings" and account.saving_balance < amount:
-                print("Insufficient balance for withdrawal.")
-                return
-            if account.withdraw(account_type, amount):
-                print(f"Withdrew ${amount:.2f} from {account_type} account.")
-                self.save_customers()
-            else:
-                print("Withdrawal failed.")
 
     def transfer_money(self, account):
         recipient_account_number = input("Enter recipient account number: ")
@@ -325,6 +291,49 @@ class Bank:
                 break
             else:
                 print("Invalid choice, please try again.")
+
+class Deposit(Bank):
+        def deposit_money(self, account):
+            account_type = input("Deposit to (checking/savings): ").lower()
+            if account_type not in ["checking", "savings"]:
+                print("Invalid account type. Please enter 'checking' or 'savings'.")
+                return
+            try:
+                amount = float(input("Enter deposit amount: "))
+                if amount <= 0:
+                    print("Deposit amount must be positive.")
+                    return
+            except ValueError:
+                print("Invalid amount. Please enter a numeric value.")
+                return
+            if account.deposit(account_type, amount):
+                print(f"Deposited ${amount:.2f} to {account_type} account.")
+                self.save_customers()
+            else:
+                print("Deposit failed.")
+
+class Withdraw(Bank):
+        def withdraw_money(self, account):
+            account_type = input("Withdraw from (checking/savings): ").lower()
+            try:
+                amount = float(input("Enter withdrawal amount: "))
+                if amount <= 0:
+                    print("Withdrawal amount must be positive.")
+                    return
+            except ValueError:
+                print("Invalid amount. Please enter a numeric value.")
+                return
+            if account_type == "checking" and account.checking_balance < amount:
+                print("Insufficient balance for withdrawal.")
+                return
+            elif account_type == "savings" and account.saving_balance < amount:
+                print("Insufficient balance for withdrawal.")
+                return
+            if account.withdraw(account_type, amount):
+                print(f"Withdrew ${amount:.2f} from {account_type} account.")
+                self.save_customers()
+            else:
+                print("Withdrawal failed.")
 
 if __name__ == "__main__":
     bank_app = Bank("bank.csv")
